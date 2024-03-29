@@ -6,6 +6,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 
 
+
 if (!Directory.Exists("Server\\data\\"))
 {
     Directory.CreateDirectory("Server\\data\\");
@@ -40,85 +41,90 @@ finally
 async Task ProcessClientAsync(Socket client)
 {
     Console.WriteLine($"Адрес подключенного клиента: {client.RemoteEndPoint}");
+
     byte[] b = new byte[512];
     var files = new List<(int, string)>();
     try
     {
-        string temp = "";
-        client.Receive(b);
-        string msg = Encoding.Default.GetString(b);
-        var zpr = msg.Split("`");
-        if (zpr[0].Contains("exit"))
+        while (true)
         {
-            client.Close();
-        }
-        else if (zpr[0] == "1")
-        {
-            byte[] resp = new byte[Convert.ToInt32(zpr[3])]; client.Receive(resp);
-            if (zpr[1].Contains("txt"))
+            string temp = "";
+            client.Receive(b);
+            string msg = Encoding.Default.GetString(b);
+            var zpr = msg.Split("`");
+            if (zpr[0].Contains("exit"))
             {
-                PUT(client, zpr[2], filesTable, resp);
+                client.Close();
+                break;
             }
-            else
+            else if (zpr[0] == "1")
             {
-                PUT_image(client, zpr[2], filesTable, resp);
-            }
-            getHashTable(filesTable);
-        }
-        else if (zpr[0] == "2")
-        {
-            if (zpr[1] == "1")
-            {
-                var res = GET(zpr[2]);
-                await client.SendAsync(Encoding.UTF8.GetBytes(res));
-            }
-            else if (zpr[1]=="2")
-            {
-                var res = GETbyId(zpr[2], filesTable);
-                await client.SendAsync(Encoding.UTF8.GetBytes(res));
-            }
-            else if (zpr[1] == "3")
-            {
-                var res = GET_image(zpr[2]);
-                await client.SendAsync(Encoding.UTF8.GetBytes(res));
-                if (res.Contains("200"))
+                byte[] resp = new byte[Convert.ToInt32(zpr[3])]; client.Receive(resp);
+                if (zpr[1].Contains("txt"))
                 {
-                    using (var ms = new MemoryStream())
+                    PUT(client, zpr[2], filesTable, resp);
+                }
+                else
+                {
+                    PUT_image(client, zpr[2], filesTable, resp);
+                }
+                getHashTable(filesTable);
+            }
+            else if (zpr[0] == "2")
+            {
+                if (zpr[1] == "1")
+                {
+                    var res = GET(zpr[2]);
+                    await client.SendAsync(Encoding.UTF8.GetBytes(res));
+                }
+                else if (zpr[1] == "2")
+                {
+                    var res = GETbyId(zpr[2], filesTable);
+                    await client.SendAsync(Encoding.UTF8.GetBytes(res));
+                }
+                else if (zpr[1] == "3")
+                {
+                    var res = GET_image(zpr[2]);
+                    await client.SendAsync(Encoding.UTF8.GetBytes(res));
+                    if (res.Contains("200"))
                     {
-                        Image image = Image.FromFile("Server\\data\\" + zpr[2]);
-                        image.Save(ms, image.RawFormat);
-                        await client.SendAsync(ms.ToArray());
+                        using (var ms = new MemoryStream())
+                        {
+                            Image image = Image.FromFile("Server\\data\\" + zpr[2]);
+                            image.Save(ms, image.RawFormat);
+                            await client.SendAsync(ms.ToArray());
+                        }
+                    }
+                }
+                else if (zpr[1] == "4")
+                {
+                    var res = GET_imagebyId(zpr[2], filesTable);
+                    await client.SendAsync(Encoding.UTF8.GetBytes(res));
+                    if (res.Contains("200"))
+                    {
+                        using (var ms = new MemoryStream())
+                        {
+                            Image image = Image.FromFile("Server\\data\\" + filesTable[zpr[2]]);
+                            image.Save(ms, image.RawFormat);
+                            await client.SendAsync(ms.ToArray());
+                        }
                     }
                 }
             }
-            else if (zpr[1] == "4")
-            {
-                var res = GET_imagebyId(zpr[2], filesTable);
-                await client.SendAsync(Encoding.UTF8.GetBytes(res));
-                if (res.Contains("200"))
-                {
-                    using (var ms = new MemoryStream())
-                    {
-                        Image image = Image.FromFile("Server\\data\\" + filesTable[zpr[2]]);
-                        image.Save(ms, image.RawFormat);
-                        await client.SendAsync(ms.ToArray());
-                    }
-                }
-            }
-        }
-        else
-        {
-            if (zpr[1] == "1")
-            {
-                var res = DELETE(zpr[2], ref filesTable);
-                await client.SendAsync(Encoding.UTF8.GetBytes(res));
-                getHashTable(filesTable);
-            }
             else
             {
-                var res = DELETEbyID(zpr[2], ref filesTable);
-                await client.SendAsync(Encoding.UTF8.GetBytes(res));
-                getHashTable(filesTable);
+                if (zpr[1] == "1")
+                {
+                    var res = DELETE(zpr[2], ref filesTable);
+                    await client.SendAsync(Encoding.UTF8.GetBytes(res));
+                    getHashTable(filesTable);
+                }
+                else
+                {
+                    var res = DELETEbyID(zpr[2], ref filesTable);
+                    await client.SendAsync(Encoding.UTF8.GetBytes(res));
+                    getHashTable(filesTable);
+                }
             }
         }
     }
@@ -130,8 +136,8 @@ async Task ProcessClientAsync(Socket client)
     {
 
         client.Close();
-        Console.WriteLine("Клиент отключился ");
     }
+
 }
 
 async void PUT(Socket client,string fileName,Hashtable a, byte[] responseBytes)

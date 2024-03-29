@@ -63,27 +63,12 @@ try
             {
                 if (temp2.Contains("txt"))
                 {
-                    using (StreamWriter writer = new StreamWriter("client\\data\\" + "temp.txt", false))
-                    {
-                        writer.Write(items[1]);
-                        writer.Close();
-                    }
                     Console.WriteLine("The File was downloaded! Specify a name for it: >");
                     string tempQ = Console.ReadLine();
-                    while (true)
+                    using (var file = File.Open("client\\data\\" + tempQ, FileMode.CreateNew, FileAccess.Write))
                     {
-                        if (tempQ == "temp.txt")
-                        {
-                            Console.WriteLine("Wrong name!");
-                            tempQ = Console.ReadLine();
-                        }
-                        else
-                        {
-                            break;
-                        }
+                        file.Write(Encoding.UTF8.GetBytes(items[1]));
                     }
-                    File.Move("client\\data\\" + "temp.txt", "client\\data\\" + tempQ);
-                    File.Create("client\\data\\" + "temp.txt");
                 }
                 else
                 {
@@ -139,12 +124,24 @@ try
         {
             Console.WriteLine("Enter name of the file: >");
             temp2 = Console.ReadLine();
+            while (true)
+            {
+                if (File.Exists("client\\data\\" + temp2))
+                {
+                    break;
+                }
+                else
+                {
+                    Console.WriteLine("File dosn`t exists");
+                    Console.WriteLine("Enter name of the file: >");
+                    temp2 = Console.ReadLine();
+                }
+            }
             Console.WriteLine("Enter name of the file to be saved on server: >");
             string temp3 = Console.ReadLine();
             Console.WriteLine("The request was sent.");
             saveFile(temp2, temp3, client, responseBytes, bytes, response);
         }
-        break;
     }
 }
 catch
