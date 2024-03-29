@@ -5,6 +5,15 @@ using System.Collections;
 using System.Drawing;
 using System.Drawing.Imaging;
 
+
+if (!Directory.Exists("Server\\data\\"))
+{
+    Directory.CreateDirectory("Server\\data\\");
+}
+if (!File.Exists("indexes.txt"))
+{
+    File.Create("indexes.txt");
+}
 IPEndPoint ipPoint = new IPEndPoint(IPAddress.Any, 8888);
 using Socket server = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 server.Bind(ipPoint);
@@ -20,7 +29,6 @@ try
         Socket client =await server.AcceptAsync();
         Thread t = new Thread(async () => ProcessClientAsync(client));
         t.Start();
-
     }
 }
 finally
@@ -122,6 +130,7 @@ async Task ProcessClientAsync(Socket client)
     {
 
         client.Close();
+        Console.WriteLine("Клиент отключился ");
     }
 }
 

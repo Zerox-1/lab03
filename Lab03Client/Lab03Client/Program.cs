@@ -4,6 +4,10 @@ using System.Text;
 using System.Drawing;
 using System.Drawing.Imaging;
 
+if (!Directory.Exists("client\\data\\"))
+{
+    Directory.CreateDirectory("client\\data\\");
+}
 var client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 try
 {
@@ -62,6 +66,7 @@ try
                     using (StreamWriter writer = new StreamWriter("client\\data\\" + "temp.txt", false))
                     {
                         writer.Write(items[1]);
+                        writer.Close();
                     }
                     Console.WriteLine("The File was downloaded! Specify a name for it: >");
                     string tempQ = Console.ReadLine();
@@ -139,9 +144,8 @@ try
             Console.WriteLine("The request was sent.");
             saveFile(temp2, temp3, client, responseBytes, bytes, response);
         }
+        break;
     }
-
-    client.Close();
 }
 catch
 {
