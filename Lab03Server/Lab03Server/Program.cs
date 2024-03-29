@@ -24,10 +24,9 @@ Hashtable filesTable = new Hashtable();
 int voidId=1;
 putHashTable(ref filesTable,ref voidId);
 List<Socket> clients = new List<Socket>();
-bool Started = true;
 try
 {
-    while (Started) // Цикл для ожидания новых подключений
+    while (true) // Цикл для ожидания новых подключений
     {
         try
         {
@@ -103,7 +102,6 @@ finally
         clients.Remove(client);
         if (clients.Count == 0)
         {
-            Started = false;
             getHashTable(filesTable);
             server.Close();
         }
@@ -132,7 +130,7 @@ async void PUT(Socket client,string fileName,Hashtable a, byte[] responseBytes,s
                 file.Write(responseBytes);
             }
             a.Add( voidId.ToString(),fileName);
-            voidId=a.Count+1;
+            voidId+=1;
         }
     }
     else
@@ -144,7 +142,7 @@ async void PUT(Socket client,string fileName,Hashtable a, byte[] responseBytes,s
             file.Write(responseBytes);
         }
         a.Add(voidId.ToString(), voidId + FileFormat.Split(".")[1]);
-        voidId = a.Count + 1;
+        voidId += 1;
     }
 }
 
@@ -156,7 +154,10 @@ void putHashTable(ref Hashtable a,ref int voidId)
         while ((line = reader.ReadLine()) != null)
         {
             a.Add(line.Split(" ")[0], line.Split(" ")[1]);
-            voidId++;
+            if (voidId <= Convert.ToInt16(line.Split(" ")[0]))
+            {
+                voidId = Convert.ToInt16(line.Split(" ")[0])+1;
+            }
         }
     }
 }
