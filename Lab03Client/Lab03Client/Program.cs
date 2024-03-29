@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Net.Sockets;
 using System.Text;
-using System.Drawing;
-using System.Drawing.Imaging;
 
 if (!Directory.Exists("client\\data\\"))
 {
@@ -34,54 +32,26 @@ try
             {
                 Console.WriteLine("Enter name: >");
                 temp2 = Console.ReadLine();
-                if (temp2.Contains("txt"))
-                {
-                    client.Send(Encoding.UTF8.GetBytes("2`1`" + temp2 + "`"));
-                }
-                else
-                {
-                    client.Send(Encoding.UTF8.GetBytes("2`3`" + temp2 + "`"));
-                }
+                client.Send(Encoding.UTF8.GetBytes("2`1`" + temp2 + "`"));
             }
             else
             {
                 Console.WriteLine("Enter ID: >");
-                 string temp3 = Console.ReadLine();
-                if (temp2.Contains("1"))
-                {
-                    client.Send(Encoding.UTF8.GetBytes("2`2`" + temp3 + "`"));
-                }
-                else
-                {
-                    client.Send(Encoding.UTF8.GetBytes("2`4`" + temp3 + "`"));
-                }
+                temp2 = Console.ReadLine();
+                client.Send(Encoding.UTF8.GetBytes("2`2`" + temp2 + "`"));
             }
             bytes = await client.ReceiveAsync(responseBytes);
             response = Encoding.UTF8.GetString(responseBytes, 0, bytes);
             var items = response.Split("`");
             if (items[0] == "200")
             {
-                if (temp2.Contains("txt"))
+                var bytes1 = new byte[Convert.ToInt32(items[1])];
+                await client.ReceiveAsync(bytes1);
+                Console.WriteLine("The File was downloaded! Specify a name for it: >");
+                string tempQ = Console.ReadLine();
+                using (var file = File.Open("client\\data\\" + tempQ, FileMode.CreateNew, FileAccess.Write))
                 {
-                    Console.WriteLine("The File was downloaded! Specify a name for it: >");
-                    string tempQ = Console.ReadLine();
-                    using (var file = File.Open("client\\data\\" + tempQ, FileMode.CreateNew, FileAccess.Write))
-                    {
-                        file.Write(Encoding.UTF8.GetBytes(items[1]));
-                    }
-                }
-                else
-                {
-                    byte[] imageBytes = new byte[Convert.ToInt32(items[1])];
-                    bytes = await client.ReceiveAsync(imageBytes);
-                    Console.WriteLine("The File was downloaded! Specify a name for it: >");
-                    string tempQ = Console.ReadLine();
-                    using (var ms12 = new MemoryStream(imageBytes))
-                    {
-                        Image img = Image.FromStream(ms12);
-                        img.Save("client\\data\\" + tempQ, img.RawFormat);
-                        ms12.Close();
-                    }
+                    file.Write(bytes1);
                 }
             }
             else
@@ -98,7 +68,7 @@ try
                 Console.WriteLine("Enter name: >");
                 temp2 = Console.ReadLine();
                 Console.WriteLine("The request was sent.");
-                client.Send(Encoding.UTF8.GetBytes("3`1`" + temp2));
+                client.Send(Encoding.UTF8.GetBytes("3`1`" + temp2+"`"));
 
             }
             else
@@ -176,31 +146,11 @@ string getOperation()
 
 
 async void saveFile(string fileName, string serverFile, Socket client, byte[] responseBytes, int bytes, string response)
-{
-    if (fileName.Contains("txt"))
-    {
-        var e = new FileInfo("client\\data\\" + fileName).Length;
-        var msg = "1`1`" + serverFile + "`" + e + "`";
-        var msg1 = File.ReadAllText("client\\data\\" + fileName);
-        await client.SendAsync(Encoding.UTF8.GetBytes(msg));
-        await client.SendAsync(Encoding.UTF8.GetBytes(msg1));
-    }
-    else
-    {
-        long e;
-        byte[] ms1;
-        using (var ms = new MemoryStream())
-        {
-            Image image = Image.FromFile("client\\data\\" + fileName);
-            image.Save(ms, image.RawFormat);
-            e = ms.Length;
-            ms1 = ms.ToArray();
-            ms.Close();
-        }
-        var msg = "1`2`" + serverFile + "`" + e + "`";
-        await client.SendAsync(Encoding.UTF8.GetBytes(msg));
-        await client.SendAsync(ms1);
-    }
+{   var e = new FileInfo("client\\data\\" + fileName).Length;
+    var msg = "1`1`" + serverFile + "`" + e + "`"+fileName+"`";
+    var msg1 = File.ReadAllBytes("client\\data\\" + fileName);
+    await client.SendAsync(Encoding.UTF8.GetBytes(msg));
+    await client.SendAsync(msg1);
     bytes = client.Receive(responseBytes);
     response = Encoding.UTF8.GetString(responseBytes, 0, bytes);
     var items = response.Split("`");
